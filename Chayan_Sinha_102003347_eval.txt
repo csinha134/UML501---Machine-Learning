@@ -1,0 +1,142 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Nov 24 09:55:18 2022
+
+@author: CSED
+"""
+##Name : Chayan Sinha
+##Roll No : 102003347
+##Sub-Group : 3CO14
+##ML LAB EVALUATION
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import KFold,train_test_split
+from sklearn.metrics import r2_score
+
+##Loading the Dataset
+df=pd.read_csv('C:/Users/CSED/Downloads/dataset.csv')
+
+df.head()
+
+
+##a Dividing the dataset in input and output features
+X=df.iloc[:,0:5]
+Y=df.iloc[:,5]
+
+##b Scaling the input features
+##Here Avg Area Income and Area Population are very large 
+##Using standard scaler
+scaler=StandardScaler()
+Xstd=scaler.fit_transform(X)
+X['Avg. Area Income']=Xstd[:,0]
+X['Area Population']=scaler.fit_transform(X[['Area Population']])
+X.head()
+
+##c Dividing into 7 folds
+
+kf=KFold(n_splits=7, random_state=None)
+
+Beta_collection=[]
+R2_collection=[]
+
+##dTrain-Test Split
+
+for train_index , test_index in kf.split(X):
+    X_train , X_test = X.iloc[train_index,:],X.iloc[test_index,:]
+    Y_train , Y_test = Y[train_index] , Y[test_index]
+
+
+    #Prepend X_test with a column of 1s
+    no_of_rows, no_of_columns=X_test.shape
+    X_ones=np.ones((no_of_rows, 1))
+    X_test_with_ones=np.hstack((X_ones, X_test))
+
+
+    #Prepend X_train with a column of 1s
+    no_of_rows, no_of_columns=X_train.shape
+    X_ones=np.ones((no_of_rows, 1))
+    X_train_with_ones=np.hstack((X_ones, X_train))
+
+    #Least Squares Method
+    X_transpose=np.transpose(X_train_with_ones)
+    X_transpose_X=np.matmul(X_transpose,X_train_with_ones)
+    X_transpose_X_inverse=np.linalg.inv(X_transpose_X)
+    X_transpose_X_inverse_X=np.matmul( X_transpose_X_inverse, X_transpose)
+    B=np.matmul( X_transpose_X_inverse_X,Y_train)
+
+    Y_predicted=np.matmul(X_test_with_ones,B)
+
+    score=r2_score(Y_test, Y_predicted)
+
+    #Store all beta matrices and R2 scores
+    Beta_collection.append(B)
+    R2_collection.append(score)
+
+    
+
+R2_max=R2_collection.index(max(R2_collection))
+best_beta=Beta_collection[R2_max]
+
+print('Best Beta is ',best_beta)
+print('MAx r2_score is ',max(R2_collection))
+
+##e 20% tesing data
+X_train,X_test,Y_train,Y_test=train_test_split(X,Y,test_size=0.2,random_state=0)
+
+#Prepend X_test with a column of 1s
+no_of_rows, no_of_columns=X_test.shape
+X_ones=np.ones((no_of_rows, 1))
+X_test_with_ones=np.hstack((X_ones, X_test))
+
+
+#Prepend X_train with a column of 1s
+no_of_rows, no_of_columns=X_train.shape
+X_ones=np.ones((no_of_rows, 1))
+X_train_with_ones=np.hstack((X_ones, X_train))
+
+y_predict=np.matmul(X_test_with_ones,B)
+score=r2_score(y_predict,Y_test)
+
+print('Score for best beta is ',score)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
